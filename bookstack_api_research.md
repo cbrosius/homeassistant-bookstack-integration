@@ -9,28 +9,33 @@ Research findings for integrating Home Assistant with BookStack API to export de
 
 ## API Documentation Sources
 - **Official Documentation**: https://www.bookstackapp.com/dev/docs/
+- **Live API Documentation**: https://demo.bookstackapp.com/api/docs
+  - **Benefits**: Interactive API explorer with test endpoints
+  - **Available Endpoints**: Full REST API documentation
+  - **Testing**: Can make live API calls to test functionality
 - **API Base URL**: `https://your-bookstack-url/api`
-- **Authentication**: Token-based (Header: `Authorization: Token YOUR_TOKEN`)
+- **Authentication**: TokenID:TokenSecret-based (Header: `Authorization: Token YOUR_TOKEN_ID:YOUR_TOKEN_SECRET`)
 
 ## Integration Requirements Analysis
 Based on the Home Assistant integration requirements:
 
 ### Target Structure
-- **Book**: "Home Assistant Documentation"
+- **Book**: "Automated Smarthome Documentation"
 - **Chapters**: Areas/Room (e.g., "Living Room", "Kitchen")
 - **Pages**: Devices (with entity details)
 
 ### Required API Operations
-1. **Find or Create Book**: "Home Assistant Documentation"
+1. **Find or Create Book**: "Automated Smarthome Documentation"
 2. **Create Chapters for Areas**: Each HA Area becomes a Chapter
 3. **Create/Update Pages**: Each HA Device becomes a Page
 4. **Update Existing Content**: Re-export should update existing pages
 
 ## Research Progress
-- [x] Authentication mechanism - Token-based auth confirmed
+- [x] Authentication mechanism - TokenID:TokenSecret-based auth confirmed
 - [x] Books API endpoints - Basic structure identified
 - [x] Chapters API endpoints - Required for Area organization
 - [x] Pages API endpoints - Required for Device documentation
+- [x] Live API documentation - Demo instance available for testing
 - [ ] Error handling patterns - Need to research
 - [ ] Rate limiting - Need to investigate
 - [ ] Request/response formats - Need detailed analysis
@@ -55,13 +60,14 @@ Based on the Home Assistant integration requirements:
 - `GET /api/pages/{id}` - Get page content
 
 ## Authentication Strategy
-- Token-based authentication
-- Header format: `Authorization: Token YOUR_TOKEN`
+- TokenID:TokenSecret-based authentication
+- Header format: `Authorization: Token YOUR_TOKEN_ID:YOUR_TOKEN_SECRET`
 - API tokens generated in BookStack admin panel
 - Configured via Home Assistant UI flow
+- **Note**: Requires both Token ID and Token Secret for proper authentication
 
 ## Data Flow Design
-1. **Initialize**: Find or create "Home Assistant Documentation" book
+1. **Initialize**: Find or create "Automated Smarthome Documentation" book
 2. **Process Areas**: For each HA Area, find or create Chapter
 3. **Process Devices**: For each Device in Area, find or create Page
 4. **Update Content**: Use PUT for existing, POST for new
