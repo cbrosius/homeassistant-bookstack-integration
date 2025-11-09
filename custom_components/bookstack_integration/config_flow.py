@@ -12,6 +12,7 @@ from .const import (
     CONF_BASE_URL,
     CONF_TOKEN_ID,
     CONF_TOKEN_SECRET,
+    CONF_SHELF_NAME,
     CONF_BOOK_NAME,
     CONF_TIMEOUT,
     DEFAULT_TIMEOUT,
@@ -36,7 +37,7 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Handle the initial step - Base Settings."""
         errors = {}
 
         if user_input is not None:
@@ -71,11 +72,11 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors[CONF_TIMEOUT] = "invalid_timeout"
 
             if not errors:
-                # Store the data
+                # Store the base settings data
                 self._data.update(user_input)
 
-                # Test connection
-                return await self.async_step_test()
+                # Move to shelf selection step
+                return await self.async_step_shelf_selection()
 
         # Show the form
         return self.async_show_form(
@@ -84,7 +85,6 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_BASE_URL, default=""): str,
                 vol.Required(CONF_TOKEN_ID, default=""): str,
                 vol.Required(CONF_TOKEN_SECRET, default=""): str,
-                vol.Optional(CONF_BOOK_NAME, default=""): str,
                 vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): int,
             }),
             errors=errors,
@@ -94,10 +94,45 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
+    async def async_step_shelf_selection(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> FlowResult:
+        """Handle the shelf selection step."""
+        errors = {}
+
+        if user_input is not None:
+            # Validate shelf input
+            shelf_name = user_input[CONF_SHELF_NAME]
+            book_name = user_input.get(CONF_BOOK_NAME, "")
+
+            if not shelf_name or len(shelf_name.strip()) < 2:
+                errors[CONF_SHELF_NAME] = "invalid_shelf_name"
+
+            if not errors:
+                # Store shelf selection data
+                self._data.update(user_input)
+
+                # Test connection and create shelf if needed
+                return await self.async_step_test()
+
+        # Show the shelf selection form
+        return self.async_show_form(
+            step_id="shelf_selection",
+            data_schema=vol.Schema({
+                vol.Required(CONF_SHELF_NAME, default=""): str,
+                vol.Optional(CONF_BOOK_NAME, default=""): str,
+            }),
+            errors=errors,
+            description_placeholders={
+                "shelf_note": "Name of the shelf to use for Home Assistant documentation",
+                "book_note": "Name of the book within the shelf (optional)",
+            },
+        )
+
     async def async_step_test(
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
-        """Test the BookStack connection."""
+        """Test the BookStack connection and setup."""
         # Test the BookStack connection
         try:
             config = BookStackConfig(
@@ -115,6 +150,17 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             
             if connection_result:
                 _LOGGER.info("BookStack connection test successful")
+                
+                # Create or verify shelf
+                try:
+                    await self.hass.async_add_executor_job(
+                        client.find_or_create_shelf,
+                        self._data[CONF_SHELF_NAME]
+                    )
+                    _LOGGER.info(f"Shelf '{self._data[CONF_SHELF_NAME]}' ready")
+                except Exception as e:
+                    _LOGGER.warning(f"Could not verify/create shelf: {e}")
+                    # Continue anyway, shelf can be created later
                 
                 # Create the config entry
                 return self.async_create_entry(
@@ -137,30 +183,24 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             elif "rate" in str(e).lower() or "429" in str(e):
                 error_message = "connection_failed"
             
-            # Return to user form with error
+            # Return to shelf selection form with error
             return self.async_show_form(
-                step_id="user",
+                step_id="shelf_selection",
                 data_schema=vol.Schema({
-                    vol.Required(CONF_BASE_URL, default=""): str,
-                    vol.Required(CONF_TOKEN_ID, default=""): str,
-                    vol.Required(CONF_TOKEN_SECRET, default=""): str,
+                    vol.Required(CONF_SHELF_NAME, default=""): str,
                     vol.Optional(CONF_BOOK_NAME, default=""): str,
-                    vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): int,
                 }),
                 errors={"base": error_message},
             )
         except Exception as e:
             _LOGGER.error(f"Unexpected error during connection test: {e}")
             
-            # Return to user form with unknown error
+            # Return to shelf selection form with unknown error
             return self.async_show_form(
-                step_id="user",
+                step_id="shelf_selection",
                 data_schema=vol.Schema({
-                    vol.Required(CONF_BASE_URL, default=""): str,
-                    vol.Required(CONF_TOKEN_ID, default=""): str,
-                    vol.Required(CONF_TOKEN_SECRET, default=""): str,
+                    vol.Required(CONF_SHELF_NAME, default=""): str,
                     vol.Optional(CONF_BOOK_NAME, default=""): str,
-                    vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): int,
                 }),
                 errors={"base": "unknown"},
             )
@@ -190,35 +230,16 @@ class BookStackIntegrationOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
-        """Manage the options."""
+        """Manage the options - Shelf selection only."""
         errors = {}
 
         if user_input is not None:
-            # Validate the user input (similar to config flow)
-            base_url = user_input[CONF_BASE_URL].rstrip("/")
-            token_id = user_input[CONF_TOKEN_ID]
-            token_secret = user_input[CONF_TOKEN_SECRET]
+            # Validate shelf input
+            shelf_name = user_input[CONF_SHELF_NAME]
+            book_name = user_input.get(CONF_BOOK_NAME, "")
 
-            # Basic URL validation
-            if not base_url.startswith(("http://", "https://")):
-                errors[CONF_BASE_URL] = "invalid_url"
-            elif not base_url.endswith("/api"):
-                base_url = f"{base_url}/api"
-                user_input[CONF_BASE_URL] = base_url
-
-            # Basic token validation
-            if not token_id or len(token_id.strip()) < 5:
-                errors[CONF_TOKEN_ID] = "invalid_token_id"
-            if not token_secret or len(token_secret.strip()) < 10:
-                errors[CONF_TOKEN_SECRET] = "invalid_token_secret"
-
-            # Validate timeout
-            try:
-                timeout_int = int(user_input[CONF_TIMEOUT])
-                if timeout_int < 5 or timeout_int > 300:
-                    errors[CONF_TIMEOUT] = "invalid_timeout"
-            except ValueError:
-                errors[CONF_TIMEOUT] = "invalid_timeout"
+            if not shelf_name or len(shelf_name.strip()) < 2:
+                errors[CONF_SHELF_NAME] = "invalid_shelf_name"
 
             if not errors:
                 # Update the config entry
@@ -229,36 +250,23 @@ class BookStackIntegrationOptionsFlow(config_entries.OptionsFlow):
 
         # Get current data
         current_data = self.config_entry.data
-        current_options = self.config_entry.options
 
-        # Show the form
+        # Show the shelf selection form
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
                 vol.Required(
-                    CONF_BASE_URL,
-                    default=current_data.get(CONF_BASE_URL, "")
-                ): str,
-                vol.Required(
-                    CONF_TOKEN_ID,
-                    default=current_data.get(CONF_TOKEN_ID, "")
-                ): str,
-                vol.Required(
-                    CONF_TOKEN_SECRET,
-                    default=current_data.get(CONF_TOKEN_SECRET, "")
+                    CONF_SHELF_NAME,
+                    default=current_data.get(CONF_SHELF_NAME, "")
                 ): str,
                 vol.Optional(
                     CONF_BOOK_NAME,
                     default=current_data.get(CONF_BOOK_NAME, "")
                 ): str,
-                vol.Optional(
-                    CONF_TIMEOUT,
-                    default=current_options.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
-                ): int,
             }),
             errors=errors,
             description_placeholders={
-                "base_url_example": "https://bookstack.example.com",
-                "timeout_note": "Request timeout in seconds (5-300)",
+                "shelf_note": "Name of the shelf to use for Home Assistant documentation",
+                "book_note": "Name of the book within the shelf (optional)",
             },
         )

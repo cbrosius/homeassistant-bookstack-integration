@@ -58,6 +58,17 @@ class Page:
     updated_at: Optional[str] = None
 
 
+@dataclass
+class Shelf:
+    """BookStack Shelf data structure."""
+    id: int
+    name: str
+    slug: str
+    description: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
 class BookStackError(Exception):
     """Base exception for BookStack API errors."""
     
@@ -387,3 +398,63 @@ class BookStackClient:
         self._chapter_cache.clear()
         self._page_cache.clear()
         _LOGGER.debug("BookStack client cache cleared")
+    
+    def get_shelves(self) -> list[Shelf]:
+        """Get all available shelves."""
+        try:
+            response = self._make_request("GET", "/api/shelves")
+            data = self._handle_response(response)
+            
+            shelves = []
+            for shelf_data in data.get("data", []):
+                shelves.append(Shelf(**shelf_data))
+            
+            _LOGGER.info(f"Retrieved {len(shelves)} shelves")
+            return shelves
+            
+        except BookStackError as e:
+            _LOGGER.error(f"Failed to get shelves: {e}")
+            raise BookStackError(f"Failed to get shelves: {e}")
+    
+    def find_shelf(self, name: str) -> Optional[Shelf]:
+        """Find a shelf by name (case-insensitive)."""
+        try:
+            response = self._make_request(
+                "GET", "/api/shelves", params={"search": name}
+            )
+            data = self._handle_response(response)
+            
+            for shelf_data in data.get("data", []):
+                if shelf_data["name"].lower() == name.lower():
+                    return Shelf(**shelf_data)
+            
+            return None
+            
+        except BookStackError as e:
+            _LOGGER.error(f"Failed to search for shelf: {e}")
+            raise BookStackError(f"Failed to search for shelf: {e}")
+    
+    def create_shelf(self, name: str, description: str = "") -> Shelf:
+        """Create a new shelf."""
+        try:
+            payload = {"title": name, "description": description}
+            response = self._make_request(
+                "POST", "/api/shelves", json=payload
+            )
+            shelf_data = self._handle_response(response)
+            _LOGGER.info(f"Created new shelf: {name} (ID: {shelf_data['id']})")
+            return Shelf(**shelf_data)
+            
+        except BookStackError as e:
+            _LOGGER.error(f"Failed to create shelf: {e}")
+            raise
+    
+    def find_or_create_shelf(self, name: str, description: str = "") -> Shelf:
+        """Find existing shelf or create new one."""
+        shelf = self.find_shelf(name)
+        if shelf:
+            _LOGGER.info(f"Using existing shelf: {name} (ID: {shelf.id})")
+            return shelf
+        
+        shelf = self.create_shelf(name, description)
+        return shelf

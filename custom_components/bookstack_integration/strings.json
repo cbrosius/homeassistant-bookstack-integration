@@ -8,15 +8,25 @@
           "base_url": "BookStack URL",
           "token_id": "Token ID",
           "token_secret": "Token Secret",
-          "book_name": "Book Name (Optional)",
           "timeout": "Timeout (seconds)"
         },
         "data_description": {
           "base_url": "The URL of your BookStack instance (e.g., https://bookstack.example.com)",
           "token_id": "Your BookStack Token ID",
           "token_secret": "Your BookStack Token Secret",
-          "book_name": "Name of the book to use for Home Assistant documentation (optional)",
           "timeout": "Request timeout in seconds (default: 30)"
+        }
+      },
+      "shelf_selection": {
+        "title": "Select Shelf for Home Assistant Documentation",
+        "description": "Choose an existing shelf or create a new one for your Home Assistant documentation",
+        "data": {
+          "shelf_name": "Shelf Name",
+          "book_name": "Book Name (Optional)"
+        },
+        "data_description": {
+          "shelf_name": "Name of the shelf to use for Home Assistant documentation",
+          "book_name": "Name of the book within the shelf (optional)"
         }
       },
       "reauth_confirm": {
@@ -34,7 +44,8 @@
       "auth_failed": "Authentication failed. Please check your Token ID and Secret.",
       "connection_failed": "Failed to connect to BookStack. Please check your URL.",
       "timeout": "Request timeout. The BookStack server may be slow.",
-      "unknown": "An unknown error occurred."
+      "unknown": "An unknown error occurred.",
+      "invalid_shelf_name": "Invalid shelf name. Please enter a valid shelf name."
     },
     "abort": {
       "already_configured": "BookStack Custom Integration is already configured.",
@@ -45,25 +56,20 @@
   },
   "options": {
     "error": {
-      "invalid_config": "Invalid configuration. Please check your settings."
+      "invalid_config": "Invalid configuration. Please check your settings.",
+      "invalid_shelf_name": "Invalid shelf name. Please enter a valid shelf name."
     },
     "step": {
       "init": {
         "title": "BookStack Custom Integration Options",
-        "description": "Update your BookStack configuration",
+        "description": "Update your shelf configuration",
         "data": {
-          "base_url": "BookStack URL",
-          "token_id": "Token ID",
-          "token_secret": "Token Secret",
-          "book_name": "Book Name (Optional)",
-          "timeout": "Timeout (seconds)"
+          "shelf_name": "Shelf Name",
+          "book_name": "Book Name (Optional)"
         },
         "data_description": {
-          "base_url": "The URL of your BookStack instance",
-          "token_id": "Your BookStack Token ID",
-          "token_secret": "Your BookStack Token Secret",
-          "book_name": "Name of the book to use for Home Assistant documentation",
-          "timeout": "Request timeout in seconds"
+          "shelf_name": "Name of the shelf to use for Home Assistant documentation",
+          "book_name": "Name of the book within the shelf (optional)"
         }
       }
     }
