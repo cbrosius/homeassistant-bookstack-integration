@@ -5,7 +5,7 @@ from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_SHELF_NAME
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -13,6 +13,9 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the BookStack Custom Integration component."""
     hass.data.setdefault(DOMAIN, {})
+    
+    # Ensure all existing config entries have devices created
+    await _ensure_all_devices_exist(hass)
     
     # Register the domain for config entries
     # Note: The config flow handles the setup, no import flow needed
@@ -27,6 +30,9 @@ async def async_setup_entry(
     
     # Store the config entry in hass.data for later use
     hass.data[DOMAIN][entry.entry_id] = entry
+    
+    # Create device for the configured shelf
+    await _create_shelf_device(hass, entry)
     
     # Forward the setup to the config flow handler
     # Note: This integration doesn't have sensor entities
@@ -84,3 +90,64 @@ async def _register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, "export", handle_export)
     
     _LOGGER.info("BookStack Custom Integration services registered")
+
+
+async def _create_shelf_device(
+    hass: HomeAssistant, entry: config_entries.ConfigEntry
+) -> None:
+    """Create a device for the selected shelf."""
+    try:
+        from homeassistant.helpers import device_registry as dr
+        
+        device_registry = dr.async_get(hass)
+        
+        shelf_name = entry.data.get(CONF_SHELF_NAME, "Unknown Shelf")
+        
+        device_info = {
+            "identifiers": {(DOMAIN, f"{entry.entry_id}_{shelf_name}")},
+            "name": f"BookStack Shelf: {shelf_name}",
+            "manufacturer": "BookStack",
+            "model": "Shelf",
+            "sw_version": "1.0",
+        }
+        
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            **device_info
+        )
+        
+        _LOGGER.info(f"Device registered for shelf: {shelf_name}")
+        
+    except Exception as e:
+        _LOGGER.error(f"Failed to register device for shelf: {e}")
+
+
+async def _ensure_all_devices_exist(hass: HomeAssistant) -> None:
+    """Ensure all config entries have devices created."""
+    try:
+        from homeassistant.helpers import device_registry as dr
+        
+        device_registry = dr.async_get(hass)
+        
+        # Get all BookStack config entries
+        for entry_id, entry in hass.config_entries.async_entries(DOMAIN):
+            shelf_name = entry.data.get(CONF_SHELF_NAME, "Unknown Shelf")
+            
+            device_info = {
+                "identifiers": {(DOMAIN, f"{entry_id}_{shelf_name}")},
+                "name": f"BookStack Shelf: {shelf_name}",
+                "manufacturer": "BookStack",
+                "model": "Shelf",
+                "sw_version": "1.0",
+            }
+            
+            device_registry.async_get_or_create(
+                config_entry_id=entry_id,
+                **device_info
+            )
+            
+            _LOGGER.info(f"Ensured device exists for shelf: {shelf_name}")
+            
+    except Exception as e:
+        _LOGGER.error(f"Failed to ensure devices exist: {e}")
+        # Continue anyway, device registration failure shouldn't break the flow

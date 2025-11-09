@@ -58,15 +58,29 @@ class Page:
     updated_at: Optional[str] = None
 
 
-@dataclass
 class Shelf:
     """BookStack Shelf data structure."""
-    id: int
-    name: str
-    slug: str
-    description: Optional[str] = None
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    
+    def __init__(self, **kwargs):
+        """Initialize Shelf with dynamic fields from BookStack API."""
+        # Required fields
+        self.id = kwargs["id"]
+        self.name = kwargs["name"]
+        self.slug = kwargs["slug"]
+        
+        # Optional fields
+        self.description = kwargs.get("description")
+        self.created_at = kwargs.get("created_at")
+        self.updated_at = kwargs.get("updated_at")
+        
+        # Store any additional fields for future use
+        for key, value in kwargs.items():
+            if key not in ["id", "name", "slug", "description", "created_at", "updated_at"]:
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        """String representation of the Shelf."""
+        return f"Shelf(id={self.id}, name='{self.name}', slug='{self.slug}')"
 
 
 class BookStackError(Exception):
@@ -214,7 +228,7 @@ class BookStackClient:
     def create_book(self, name: str, description: str = "") -> Book:
         """Create a new book."""
         try:
-            payload = {"title": name, "description": description}
+            payload = {"name": name, "description": description}
             response = self._make_request(
                 "POST", "/api/books", json=payload
             )
@@ -274,7 +288,7 @@ class BookStackClient:
     ) -> Chapter:
         """Create a new chapter within a book."""
         try:
-            payload = {"title": name, "description": description}
+            payload = {"name": name, "description": description}
             response = self._make_request(
                 "POST", f"/api/books/{book_id}/chapters", json=payload
             )
@@ -437,7 +451,7 @@ class BookStackClient:
     def create_shelf(self, name: str, description: str = "") -> Shelf:
         """Create a new shelf."""
         try:
-            payload = {"title": name, "description": description}
+            payload = {"name": name, "description": description}
             response = self._make_request(
                 "POST", "/api/shelves", json=payload
             )

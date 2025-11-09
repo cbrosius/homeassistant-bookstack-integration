@@ -1,0 +1,10 @@
+export:
+  name: "Export to BookStack"
+  description: "Export Home Assistant devices and entities to BookStack"
+  fields:
+    area_filter:
+      name: "Area Filter"
+      description: "Optional: Export only devices from a specific area (room name)"
+      required: false
+      selector:
+        text:

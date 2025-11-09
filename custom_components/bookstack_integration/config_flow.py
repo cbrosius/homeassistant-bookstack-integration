@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
@@ -13,7 +12,6 @@ from .const import (
     CONF_TOKEN_ID,
     CONF_TOKEN_SECRET,
     CONF_SHELF_NAME,
-    CONF_BOOK_NAME,
     CONF_TIMEOUT,
     DEFAULT_TIMEOUT,
     LOGGER_NAME
@@ -101,31 +99,92 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            # Validate shelf input
-            shelf_name = user_input[CONF_SHELF_NAME]
-            book_name = user_input.get(CONF_BOOK_NAME, "")
+            # Check if user wants to use existing shelf or create new
+            if "existing_shelf" in user_input:
+                if user_input["existing_shelf"] == "__create_new__":
+                    # User wants to create a new shelf
+                    return await self.async_step_create_shelf()
+                elif user_input["existing_shelf"]:
+                    # User selected an existing shelf
+                    selected_shelf = user_input["existing_shelf"]
+                    self._data[CONF_SHELF_NAME] = selected_shelf
+                    return await self.async_step_test()
 
-            if not shelf_name or len(shelf_name.strip()) < 2:
-                errors[CONF_SHELF_NAME] = "invalid_shelf_name"
+        # Get available shelves
+        available_shelves = []
+        try:
+            config = BookStackConfig(
+                base_url=self._data[CONF_BASE_URL],
+                token_id=self._data[CONF_TOKEN_ID],
+                token_secret=self._data[CONF_TOKEN_SECRET],
+                timeout=self._data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
+            )
+            client = BookStackClient(config)
+            
+            # Fetch shelves in executor to avoid blocking
+            available_shelves = await self.hass.async_add_executor_job(
+                client.get_shelves
+            )
+            _LOGGER.info(
+                f"Retrieved {len(available_shelves)} shelves for selection"
+            )
+            
+        except Exception as e:
+            _LOGGER.warning(f"Could not fetch available shelves: {e}")
+            # Continue without shelves list
 
-            if not errors:
-                # Store shelf selection data
-                self._data.update(user_input)
+        # Create choices for available shelves
+        shelf_choices = {}
+        if available_shelves:
+            for shelf in available_shelves:
+                shelf_choices[shelf.name] = shelf.name
 
-                # Test connection and create shelf if needed
-                return await self.async_step_test()
+        # Add option to create new shelf
+        shelf_choices["__create_new__"] = "Create New Shelf"
 
         # Show the shelf selection form
         return self.async_show_form(
             step_id="shelf_selection",
             data_schema=vol.Schema({
-                vol.Required(CONF_SHELF_NAME, default=""): str,
-                vol.Optional(CONF_BOOK_NAME, default=""): str,
+                vol.Required("existing_shelf", default=""): vol.In(
+                    shelf_choices
+                ),
             }),
             errors=errors,
             description_placeholders={
-                "shelf_note": "Name of the shelf to use for Home Assistant documentation",
-                "book_note": "Name of the book within the shelf (optional)",
+                "shelf_note": (
+                    "Select an existing shelf or choose to create a new one"
+                ),
+            },
+        )
+
+    async def async_step_create_shelf(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> FlowResult:
+        """Handle creating a new shelf."""
+        errors = {}
+
+        if user_input is not None:
+            # Validate new shelf input
+            shelf_name = user_input[CONF_SHELF_NAME]
+
+            if not shelf_name or len(shelf_name.strip()) < 2:
+                errors[CONF_SHELF_NAME] = "invalid_shelf_name"
+
+            if not errors:
+                # Store the new shelf information
+                self._data[CONF_SHELF_NAME] = shelf_name.strip()
+                return await self.async_step_test()
+
+        # Show the new shelf creation form
+        return self.async_show_form(
+            step_id="create_shelf",
+            data_schema=vol.Schema({
+                vol.Required(CONF_SHELF_NAME, default=""): str,
+            }),
+            errors=errors,
+            description_placeholders={
+                "shelf_note": "Name for the new shelf",
             },
         )
 
@@ -157,14 +216,16 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         client.find_or_create_shelf,
                         self._data[CONF_SHELF_NAME]
                     )
-                    _LOGGER.info(f"Shelf '{self._data[CONF_SHELF_NAME]}' ready")
+                    _LOGGER.info(
+                        f"Shelf '{self._data[CONF_SHELF_NAME]}' ready"
+                    )
                 except Exception as e:
                     _LOGGER.warning(f"Could not verify/create shelf: {e}")
                     # Continue anyway, shelf can be created later
                 
                 # Create the config entry
                 return self.async_create_entry(
-                    title="BookStack Custom Integration",
+                    title="My Bookstack Instance",
                     data=self._data,
                 )
             else:
@@ -188,7 +249,6 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="shelf_selection",
                 data_schema=vol.Schema({
                     vol.Required(CONF_SHELF_NAME, default=""): str,
-                    vol.Optional(CONF_BOOK_NAME, default=""): str,
                 }),
                 errors={"base": error_message},
             )
@@ -200,7 +260,6 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="shelf_selection",
                 data_schema=vol.Schema({
                     vol.Required(CONF_SHELF_NAME, default=""): str,
-                    vol.Optional(CONF_BOOK_NAME, default=""): str,
                 }),
                 errors={"base": "unknown"},
             )
@@ -210,63 +269,3 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> FlowResult:
         """Handle import from configuration.yaml."""
         return await self.async_step_user(import_config)
-
-    @staticmethod
-    @callback
-    def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,
-    ) -> "BookStackIntegrationOptionsFlow":
-        """Get the options flow for this handler."""
-        return BookStackIntegrationOptionsFlow(config_entry)
-
-
-class BookStackIntegrationOptionsFlow(config_entries.OptionsFlow):
-    """Handle options flow for BookStack Custom Integration."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
-
-    async def async_step_init(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> FlowResult:
-        """Manage the options - Shelf selection only."""
-        errors = {}
-
-        if user_input is not None:
-            # Validate shelf input
-            shelf_name = user_input[CONF_SHELF_NAME]
-            book_name = user_input.get(CONF_BOOK_NAME, "")
-
-            if not shelf_name or len(shelf_name.strip()) < 2:
-                errors[CONF_SHELF_NAME] = "invalid_shelf_name"
-
-            if not errors:
-                # Update the config entry
-                return self.async_create_entry(
-                    title="",
-                    data=user_input,
-                )
-
-        # Get current data
-        current_data = self.config_entry.data
-
-        # Show the shelf selection form
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema({
-                vol.Required(
-                    CONF_SHELF_NAME,
-                    default=current_data.get(CONF_SHELF_NAME, "")
-                ): str,
-                vol.Optional(
-                    CONF_BOOK_NAME,
-                    default=current_data.get(CONF_BOOK_NAME, "")
-                ): str,
-            }),
-            errors=errors,
-            description_placeholders={
-                "shelf_note": "Name of the shelf to use for Home Assistant documentation",
-                "book_note": "Name of the book within the shelf (optional)",
-            },
-        )

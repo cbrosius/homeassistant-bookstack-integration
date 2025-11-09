@@ -21,12 +21,20 @@
         "title": "Select Shelf for Home Assistant Documentation",
         "description": "Choose an existing shelf or create a new one for your Home Assistant documentation",
         "data": {
-          "shelf_name": "Shelf Name",
-          "book_name": "Book Name (Optional)"
+          "existing_shelf": "Available Shelves"
         },
         "data_description": {
-          "shelf_name": "Name of the shelf to use for Home Assistant documentation",
-          "book_name": "Name of the book within the shelf (optional)"
+          "existing_shelf": "Select an existing shelf or choose 'Create New Shelf'"
+        }
+      },
+      "create_shelf": {
+        "title": "Create New Shelf",
+        "description": "Create a new shelf for your Home Assistant documentation",
+        "data": {
+          "shelf_name": "Shelf Name"
+        },
+        "data_description": {
+          "shelf_name": "Name for the new shelf"
         }
       },
       "reauth_confirm": {
@@ -64,12 +72,10 @@
         "title": "BookStack Custom Integration Options",
         "description": "Update your shelf configuration",
         "data": {
-          "shelf_name": "Shelf Name",
-          "book_name": "Book Name (Optional)"
+          "existing_shelf": "Available Shelves"
         },
         "data_description": {
-          "shelf_name": "Name of the shelf to use for Home Assistant documentation",
-          "book_name": "Name of the book within the shelf (optional)"
+          "existing_shelf": "Select an existing shelf or choose 'Create New Shelf'"
         }
       }
     }
