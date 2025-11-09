@@ -2,12 +2,15 @@
 import logging
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, Optional
 from urllib.parse import urljoin
 
 import requests
 
-from .const import LOGGER_NAME, DEFAULT_TIMEOUT
+from .const import (
+    LOGGER_NAME, DEFAULT_TIMEOUT, DEFAULT_BOOK_DESCRIPTION
+)
 
 _LOGGER = logging.getLogger(LOGGER_NAME)
 
@@ -30,6 +33,38 @@ class Book:
     description: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+    owned_by: Optional[int] = None
+    cover: Optional[str] = None
+    
+    def __init__(self, **kwargs):
+        """Initialize Book with all available fields from BookStack API."""
+        # Required fields
+        self.id = kwargs["id"]
+        self.name = kwargs["name"]
+        self.slug = kwargs["slug"]
+        
+        # Optional fields with defaults
+        self.description = kwargs.get("description")
+        self.created_at = kwargs.get("created_at")
+        self.updated_at = kwargs.get("updated_at")
+        self.created_by = kwargs.get("created_by")
+        self.updated_by = kwargs.get("updated_by")
+        self.owned_by = kwargs.get("owned_by")
+        self.cover = kwargs.get("cover")
+        
+        # Store any additional fields for future use
+        for key, value in kwargs.items():
+            if key not in [
+                "id", "name", "slug", "description", "created_at",
+                "updated_at", "created_by", "updated_by", "owned_by", "cover"
+            ]:
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        """String representation of the Book."""
+        return f"Book(id={self.id}, name='{self.name}', slug='{self.slug}')"
 
 
 @dataclass
@@ -42,6 +77,38 @@ class Chapter:
     description: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+    
+    def __init__(self, **kwargs):
+        """Initialize Chapter with all available fields from BookStack API."""
+        # Required fields
+        self.id = kwargs["id"]
+        self.book_id = kwargs["book_id"]
+        self.name = kwargs["name"]
+        self.slug = kwargs["slug"]
+        
+        # Optional fields with defaults
+        self.description = kwargs.get("description")
+        self.created_at = kwargs.get("created_at")
+        self.updated_at = kwargs.get("updated_at")
+        self.created_by = kwargs.get("created_by")
+        self.updated_by = kwargs.get("updated_by")
+        
+        # Store any additional fields for future use
+        for key, value in kwargs.items():
+            if key not in [
+                "id", "book_id", "name", "slug", "description",
+                "created_at", "updated_at", "created_by", "updated_by"
+            ]:
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        """String representation of the Chapter."""
+        return (
+            f"Chapter(id={self.id}, name='{self.name}', "
+            f"slug='{self.slug}', book_id={self.book_id})"
+        )
 
 
 @dataclass
@@ -56,6 +123,43 @@ class Page:
     markdown: Optional[str] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    created_by: Optional[int] = None
+    updated_by: Optional[int] = None
+    owned_by: Optional[int] = None
+    
+    def __init__(self, **kwargs):
+        """Initialize Page with all available fields from BookStack API."""
+        # Required fields
+        self.id = kwargs["id"]
+        self.book_id = kwargs["book_id"]
+        self.chapter_id = kwargs["chapter_id"]
+        self.name = kwargs["name"]
+        self.slug = kwargs["slug"]
+        
+        # Optional fields with defaults
+        self.html = kwargs.get("html")
+        self.markdown = kwargs.get("markdown")
+        self.created_at = kwargs.get("created_at")
+        self.updated_at = kwargs.get("updated_at")
+        self.created_by = kwargs.get("created_by")
+        self.updated_by = kwargs.get("updated_by")
+        self.owned_by = kwargs.get("owned_by")
+        
+        # Store any additional fields for future use
+        for key, value in kwargs.items():
+            if key not in [
+                "id", "book_id", "chapter_id", "name", "slug", "html",
+                "markdown", "created_at", "updated_at", "created_by",
+                "updated_by", "owned_by"
+            ]:
+                setattr(self, key, value)
+    
+    def __repr__(self):
+        """String representation of the Page."""
+        return (
+            f"Page(id={self.id}, name='{self.name}', "
+            f"slug='{self.slug}', chapter_id={self.chapter_id})"
+        )
 
 
 class Shelf:
@@ -75,7 +179,11 @@ class Shelf:
         
         # Store any additional fields for future use
         for key, value in kwargs.items():
-            if key not in ["id", "name", "slug", "description", "created_at", "updated_at"]:
+            excluded_keys = [
+                "id", "name", "slug", "description",
+                "created_at", "updated_at"
+            ]
+            if key not in excluded_keys:
                 setattr(self, key, value)
     
     def __repr__(self):
@@ -240,6 +348,21 @@ class BookStackClient:
             _LOGGER.error(f"Failed to create book: {e}")
             raise
     
+    def assign_book_to_shelf(self, book_id: int, shelf_id: int) -> bool:
+        """Assign a book to a shelf."""
+        try:
+            payload = {"books": [book_id]}
+            response = self._make_request(
+                "PUT", f"/api/shelves/{shelf_id}/books", json=payload
+            )
+            self._handle_response(response)
+            _LOGGER.info(f"Assigned book {book_id} to shelf {shelf_id}")
+            return True
+            
+        except BookStackError as e:
+            _LOGGER.error(f"Failed to assign book to shelf: {e}")
+            return False
+    
     def find_or_create_book(self, name: str, description: str = "") -> Book:
         """Find existing book or create new one."""
         if self._book_cache:
@@ -276,6 +399,10 @@ class BookStackClient:
             
             return None
             
+        except BookStackNotFoundError:
+            # Book might be empty (no chapters yet), return None instead
+            _LOGGER.debug(f"No chapters found in book {book_id}")
+            return None
         except BookStackError as e:
             _LOGGER.error(f"Failed to search for chapter: {e}")
             raise BookStackError(f"Failed to search for chapter: {e}")
@@ -288,9 +415,14 @@ class BookStackClient:
     ) -> Chapter:
         """Create a new chapter within a book."""
         try:
-            payload = {"name": name, "description": description}
+            # BookStack uses /api/chapters endpoint with book_id in payload
+            payload = {
+                "name": name,
+                "description": description,
+                "book_id": book_id
+            }
             response = self._make_request(
-                "POST", f"/api/books/{book_id}/chapters", json=payload
+                "POST", "/api/chapters", json=payload
             )
             chapter_data = self._handle_response(response)
             _LOGGER.info(
@@ -472,3 +604,93 @@ class BookStackClient:
         
         shelf = self.create_shelf(name, description)
         return shelf
+
+    def find_or_create_areas_book(self) -> Book:
+        """Find or create the Areas book."""
+        areas_book = self.find_book("Areas")
+        if areas_book:
+            return areas_book
+        
+        description = (
+            "Home Assistant device and entity documentation "
+            "organized by physical areas"
+        )
+        return self.create_book("Areas", description)
+
+    def create_area_chapter(
+        self, book_id: int, area_name: str, area_info: Dict
+    ) -> Chapter:
+        """Create a chapter for an area/floor."""
+        device_count = area_info.get('device_count', 0)
+        entity_count = area_info.get('entity_count', 0)
+        description = (
+            f"Documentation for {area_name} area "
+            f"({device_count} devices, {entity_count} entities)"
+        )
+        return self.find_or_create_chapter(book_id, area_name, description)
+
+    def create_area_page(
+        self, chapter_id: int, area_name: str, area_info: Dict
+    ) -> Page:
+        """Create a detailed page for an area."""
+        content = self._generate_area_page_content(area_name, area_info)
+        return self.create_or_update_page(
+            chapter_id, f"{area_name} Overview", content
+        )
+
+    def _generate_area_page_content(
+        self, area_name: str, area_info: Dict
+    ) -> str:
+        """Generate markdown content for an area page."""
+        content = f"""# {area_name} - Home Assistant Area Overview
+
+## Overview
+This page documents the Home Assistant devices and entities
+located in the **{area_name}** area.
+
+## Statistics
+- **Devices**: {area_info.get('device_count', 0)}
+- **Entities**: {area_info.get('entity_count', 0)}
+
+## Devices
+
+| Device | Manufacturer | Model | Status |
+|--------|-------------|-------|--------|
+"""
+        
+        for device in area_info.get('devices', []):
+            name = device.get('name', 'Unknown')
+            manufacturer = device.get('manufacturer', 'Unknown')
+            model = device.get('model', 'Unknown')
+            content += f"| {name} | {manufacturer} | {model} | Active |\n"
+        
+        content += """
+## Entities
+
+| Entity ID | Friendly Name | Device Class | Unit |
+|-----------|--------------|--------------|------|
+"""
+        
+        for entity in area_info.get('entities', []):
+            unit = entity.get('unit_of_measurement', '-')
+            device_class = entity.get('device_class', '-')
+            friendly_name = entity.get('friendly_name', '')
+            if not friendly_name:
+                friendly_name = entity.get('entity_id', 'Unknown')
+            entity_id = entity.get('entity_id', 'Unknown')
+            content += (
+                f"| {entity_id} | {friendly_name} | "
+                f"{device_class} | {unit} |\n"
+            )
+        
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        content += f"""
+## Last Updated
+Generated on: {timestamp}
+
+---
+*This documentation is automatically generated by the
+Home Assistant BookStack Integration*
+"""
+        
+        return content
