@@ -1,0 +1,12 @@
+{
+  "domain": "bookstack_integration",
+  "name": "BookStack Custom Integration",
+  "codeowners": ["@cbrosius"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/cbrosius/homeassistant-bookstack-integration",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/cbrosius/homeassistant-bookstack-integration/issues",
+  "requirements": ["requests>=2.25.0"],
+  "version": "0.1.0"
+}

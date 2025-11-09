@@ -1,0 +1,22 @@
+{
+  "name": "BookStack Custom Integration",
+  "filename": "bookstack_integration.zip",
+  "content_in_root": false,
+  "manifest": {
+    "name": "BookStack Custom Integration",
+    "filename": "bookstack_integration.zip",
+    "content_in_root": false,
+    "zip_release": true,
+    "hide_default_branch": true
+  },
+  "country": "DE",
+  "domains": [
+    "sensor"
+  ],
+  "iot_class": "cloud_polling",
+  "publish_pip": false,
+  "render_readme": true,
+  "username": "cbrosius",
+  "repository": "homeassistant-bookstack-integration",
+  "icon": "mdi:book-open-variant"
+}

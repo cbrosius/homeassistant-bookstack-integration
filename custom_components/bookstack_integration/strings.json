@@ -1,0 +1,78 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BookStack Custom Integration Configuration",
+        "description": "Configure your BookStack instance for Home Assistant custom integration",
+        "data": {
+          "base_url": "BookStack URL",
+          "api_token": "API Token",
+          "book_name": "Book Name (Optional)",
+          "timeout": "Timeout (seconds)"
+        },
+        "data_description": {
+          "base_url": "The URL of your BookStack instance (e.g., https://bookstack.example.com)",
+          "api_token": "Your BookStack API token",
+          "book_name": "Name of the book to use for Home Assistant documentation (optional)",
+          "timeout": "Request timeout in seconds (default: 30)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate with BookStack",
+        "description": "The configuration is outdated or invalid. Please re-enter your credentials.",
+        "data": {
+          "base_url": "BookStack URL",
+          "api_token": "API Token"
+        }
+      }
+    },
+    "error": {
+      "invalid_config": "Invalid configuration. Please check your settings.",
+      "auth_failed": "Authentication failed. Please check your API token.",
+      "connection_failed": "Failed to connect to BookStack. Please check your URL.",
+      "timeout": "Request timeout. The BookStack server may be slow.",
+      "unknown": "An unknown error occurred."
+    },
+    "abort": {
+      "already_configured": "BookStack Custom Integration is already configured.",
+      "already_in_progress": "Configuration already in progress.",
+      "not_internet": "This integration requires internet access.",
+      "reauth_successful": "Re-authentication successful."
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_config": "Invalid configuration. Please check your settings."
+    },
+    "step": {
+      "init": {
+        "title": "BookStack Custom Integration Options",
+        "description": "Update your BookStack configuration",
+        "data": {
+          "base_url": "BookStack URL",
+          "api_token": "API Token",
+          "book_name": "Book Name (Optional)",
+          "timeout": "Timeout (seconds)"
+        },
+        "data_description": {
+          "base_url": "The URL of your BookStack instance",
+          "api_token": "Your BookStack API token",
+          "book_name": "Name of the book to use for Home Assistant documentation",
+          "timeout": "Request timeout in seconds"
+        }
+      }
+    }
+  },
+  "services": {
+    "export": {
+      "name": "Export to BookStack",
+      "description": "Export Home Assistant devices and entities to BookStack",
+      "fields": {
+        "area_filter": {
+          "name": "Area Filter",
+          "description": "Optional: Export only devices from a specific area (room name)"
+        }
+      }
+    }
+  }
+}
