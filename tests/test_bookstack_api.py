@@ -2,7 +2,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from custom_components.bookstack_export.bookstack_api import (
+from custom_components.bookstack_integration.bookstack_api import (
     BookStackConfig,
     Book,
     Chapter,

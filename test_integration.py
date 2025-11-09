@@ -13,13 +13,13 @@ def test_integration_structure():
     
     try:
         # Test basic imports
-        from custom_components.bookstack_export.const import DOMAIN
+        from custom_components.bookstack_integration.const import DOMAIN
         print(f"[OK] Domain imported: {DOMAIN}")
         
-        from custom_components.bookstack_export.manifest import manifest
+        from custom_components.bookstack_integration.manifest import manifest
         print(f"[OK] Manifest loaded: {manifest['name']} v{manifest['version']}")
         
-        from custom_components.bookstack_export.bookstack_api import (
+        from custom_components.bookstack_integration.bookstack_api import (
             BookStackClient,
             BookStackConfig,
             Book,
@@ -44,7 +44,7 @@ def test_bookstack_client():
     print("\nTesting BookStackClient initialization...")
     
     try:
-        from custom_components.bookstack_export.bookstack_api import (
+        from custom_components.bookstack_integration.bookstack_api import (
             BookStackClient, BookStackConfig
         )
         
@@ -82,7 +82,7 @@ def test_data_structures():
     print("\nTesting data structures...")
     
     try:
-        from custom_components.bookstack_export.bookstack_api import (
+        from custom_components.bookstack_integration.bookstack_api import (
             Book, Chapter, Page
         )
         
@@ -133,12 +133,12 @@ def test_file_structure():
     print("\nTesting file structure...")
     
     expected_files = [
-        "custom_components/bookstack_export/manifest.json",
-        "custom_components/bookstack_export/const.py",
-        "custom_components/bookstack_export/__init__.py",
-        "custom_components/bookstack_export/strings.json",
-        "custom_components/bookstack_export/bookstack_api.py",
-        "custom_components/bookstack_export/requirements.txt",
+        "custom_components/bookstack_integration/manifest.json",
+        "custom_components/bookstack_integration/const.py",
+        "custom_components/bookstack_integration/__init__.py",
+        "custom_components/bookstack_integration/strings.json",
+        "custom_components/bookstack_integration/bookstack_api.py",
+        "custom_components/bookstack_integration/requirements.txt",
         "hacs.json",
         ".gitignore",
         "tests/test_bookstack_api.py"

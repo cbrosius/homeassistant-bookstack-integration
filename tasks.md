@@ -33,7 +33,7 @@ The goal is to generate a structured documentation of the smart home setup – o
 ### 2. Triggering the Export
 - Provide a **service call**:
   ```yaml
-  service: bookstack_export.export
+  service: bookstack_integration.export
   data:
     area_filter: "Living Room"  # optional
   ```
@@ -78,7 +78,7 @@ The goal is to generate a structured documentation of the smart home setup – o
 ## 🧩 Integration File Structure
 
 ```
-custom_components/bookstack_export/
+custom_components/bookstack_integration/
 ├── __init__.py
 ├── manifest.json
 ├── config_flow.py
@@ -98,7 +98,7 @@ custom_components/bookstack_export/
 | `config_flow.py` | Handles configuration via the UI |
 | `bookstack_api.py` | REST client for BookStack |
 | `exporter.py` | Logic for formatting and exporting data |
-| `services.yaml` | Defines service schema (`bookstack_export.export`) |
+| `services.yaml` | Defines service schema (`bookstack_integration.export`) |
 | `const.py` | Holds constants (domain name, defaults, etc.) |
 | `strings.json` | UI localization strings |
 
@@ -107,7 +107,7 @@ custom_components/bookstack_export/
 ## 🧠 Development Tasks
 
 ### Phase 1 – Project Setup
-- [ ] Create project structure under `custom_components/bookstack_export/`
+- [ ] Create project structure under `custom_components/bookstack_integration/`
 - [ ] Add `manifest.json` with minimal metadata
 - [ ] Initialize GitHub repository and add `hacs.json`
 - [ ] Create `.gitignore` and `requirements.txt`

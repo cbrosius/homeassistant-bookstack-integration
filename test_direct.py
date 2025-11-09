@@ -5,7 +5,7 @@ import os
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, "custom_components/bookstack_export")
+sys.path.insert(0, "custom_components/bookstack_integration")
 
 
 def test_bookstack_api_directly():
@@ -119,7 +119,7 @@ def test_integration_files():
     
     try:
         # Test manifest.json
-        with open("custom_components/bookstack_export/manifest.json", "r") as f:
+        with open("custom_components/bookstack_integration/manifest.json", "r") as f:
             import json
             manifest = json.load(f)
             assert "domain" in manifest
@@ -128,14 +128,14 @@ def test_integration_files():
             print(f"[OK] manifest.json: {manifest['name']} v{manifest['version']}")
         
         # Test const.py can be imported (basic test)
-        with open("custom_components/bookstack_export/const.py", "r") as f:
+        with open("custom_components/bookstack_integration/const.py", "r") as f:
             content = f.read()
             assert "DOMAIN" in content
-            assert "bookstack_export" in content
+            assert "bookstack_integration" in content
             print("[OK] const.py structure looks correct")
         
         # Test requirements.txt
-        with open("custom_components/bookstack_export/requirements.txt", "r") as f:
+        with open("custom_components/bookstack_integration/requirements.txt", "r") as f:
             requirements = f.read().strip()
             assert "requests" in requirements
             print(f"[OK] requirements.txt: {requirements}")
@@ -149,7 +149,7 @@ def test_integration_files():
             print(f"[OK] hacs.json: {hacs_config['name']}")
         
         # Test strings.json
-        with open("custom_components/bookstack_export/strings.json", "r") as f:
+        with open("custom_components/bookstack_integration/strings.json", "r") as f:
             import json
             strings = json.load(f)
             assert "config" in strings
@@ -168,12 +168,12 @@ def test_file_structure():
     print("\nTesting file structure...")
     
     expected_files = [
-        "custom_components/bookstack_export/manifest.json",
-        "custom_components/bookstack_export/const.py",
-        "custom_components/bookstack_export/__init__.py",
-        "custom_components/bookstack_export/strings.json",
-        "custom_components/bookstack_export/bookstack_api.py",
-        "custom_components/bookstack_export/requirements.txt",
+        "custom_components/bookstack_integration/manifest.json",
+        "custom_components/bookstack_integration/const.py",
+        "custom_components/bookstack_integration/__init__.py",
+        "custom_components/bookstack_integration/strings.json",
+        "custom_components/bookstack_integration/bookstack_api.py",
+        "custom_components/bookstack_integration/requirements.txt",
         "hacs.json",
         ".gitignore",
         "tests/test_bookstack_api.py"

@@ -13,7 +13,7 @@ def test_bookstack_client_standalone():
     
     try:
         # Import only the BookStack client components
-        from custom_components.bookstack_export.bookstack_api import (
+        from custom_components.bookstack_integration.bookstack_api import (
             BookStackClient,
             BookStackConfig,
             Book,
@@ -118,7 +118,7 @@ def test_integration_files():
     
     try:
         # Test manifest.json
-        with open("custom_components/bookstack_export/manifest.json", "r") as f:
+        with open("custom_components/bookstack_integration/manifest.json", "r") as f:
             import json
             manifest = json.load(f)
             assert "domain" in manifest
@@ -127,14 +127,14 @@ def test_integration_files():
             print(f"[OK] manifest.json: {manifest['name']} v{manifest['version']}")
         
         # Test const.py can be imported (basic test)
-        with open("custom_components/bookstack_export/const.py", "r") as f:
+        with open("custom_components/bookstack_integration/const.py", "r") as f:
             content = f.read()
             assert "DOMAIN" in content
-            assert "bookstack_export" in content
+            assert "bookstack_integration" in content
             print("[OK] const.py structure looks correct")
         
         # Test requirements.txt
-        with open("custom_components/bookstack_export/requirements.txt", "r") as f:
+        with open("custom_components/bookstack_integration/requirements.txt", "r") as f:
             requirements = f.read().strip()
             assert "requests" in requirements
             print(f"[OK] requirements.txt: {requirements}")

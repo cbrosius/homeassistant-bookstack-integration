@@ -9,7 +9,7 @@ Date: 2025-11-09
 ### ✅ Alignment with Requirements
 - **HACS Compatibility**: Standard HA integration structure ✓
 - **Config Flow UI**: `config_flow.py` for user setup ✓  
-- **Service Definition**: `services.yaml` for `bookstack_export.export` ✓
+- **Service Definition**: `services.yaml` for `bookstack_integration.export` ✓
 - **Error Handling**: Comprehensive exception hierarchy ✓
 - **Async Support**: Ready for HA's async environment ✓
 
@@ -17,7 +17,7 @@ Date: 2025-11-09
 
 #### Planned Structure (from tasks.md)
 ```
-custom_components/bookstack_export/
+custom_components/bookstack_integration/
 ├── __init__.py
 ├── manifest.json
 ├── config_flow.py
@@ -100,7 +100,7 @@ class BookStackExporter:
 **Purpose**: Register integration and services
 
 **Responsibilities**:
-- Register domain: `bookstack_export`
+- Register domain: `bookstack_integration`
 - Define service: `export`
 - Handle setup/teardown
 - Register configuration flow

@@ -161,11 +161,11 @@ def main():
     if failed == 0:
         print("\n[SUCCESS] Refactor completed successfully!")
         print("\n=== REFACTOR COMPLETION STATUS ===")
-        print("✅ Domain renamed from 'bookstack_export' to 'bookstack_integration'")
+        print("✅ Domain renamed from 'bookstack_integration' to 'bookstack_integration'")
         print("✅ Integration name changed from 'BookStack Export' to 'BookStack Custom Integration'")
         print("✅ All files updated with new domain and names")
         print("✅ HACS configuration updated")
-        print("✅ Old 'bookstack_export' directory removed")
+        print("✅ Old 'bookstack_integration' directory removed")
         print("✅ New 'bookstack_integration' directory created")
         print("\n🎉 REFACTOR COMPLETE - READY FOR NEXT PHASES!")
         return True

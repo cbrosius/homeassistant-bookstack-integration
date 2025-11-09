@@ -193,7 +193,7 @@ class BookStackOptionsFlow(config_entries.OptionsFlow):
 
 ### Service Schema
 ```yaml
-bookstack_export:
+bookstack_integration:
   export:
     name: "Export to BookStack"
     description: "Export Home Assistant devices and entities to BookStack"
@@ -366,7 +366,7 @@ async def async_register_services(hass: HomeAssistant, entry: ConfigEntry) -> No
 ```python
 """Constants for the BookStack Export integration."""
 
-DOMAIN = "bookstack_export"
+DOMAIN = "bookstack_integration"
 
 CONF_URL = "url"
 CONF_TOKEN = "token"
@@ -466,7 +466,7 @@ async def _notify_success(hass: HomeAssistant, area_filter: Optional[str] = None
             {
                 "message": message,
                 "title": "BookStack Export Complete",
-                "notification_id": "bookstack_export_success"
+                "notification_id": "bookstack_integration_success"
             }
         )
     )
@@ -482,7 +482,7 @@ async def _notify_error(hass: HomeAssistant, error_message: str) -> None:
             {
                 "message": f"BookStack Export failed: {error_message}",
                 "title": "BookStack Export Error",
-                "notification_id": "bookstack_export_error"
+                "notification_id": "bookstack_integration_error"
             }
         )
     )

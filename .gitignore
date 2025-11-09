@@ -158,5 +158,5 @@ Desktop.ini
 *.iws
 
 # HACS specific
-custom_components/bookstack_export/.github/
-custom_components/bookstack_export/.pre-commit-config.yaml
+custom_components/bookstack_integration/.github/
+custom_components/bookstack_integration/.pre-commit-config.yaml

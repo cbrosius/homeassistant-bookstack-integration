@@ -333,7 +333,7 @@ jobs:
           pip install pytest pytest-cov
       - name: Run unit tests
         run: |
-          pytest tests/unit/ --cov=custom_components/bookstack_export --cov-report=xml
+          pytest tests/unit/ --cov=custom_components/bookstack_integration --cov-report=xml
       - name: Upload coverage
         uses: codecov/codecov-action@v3
 

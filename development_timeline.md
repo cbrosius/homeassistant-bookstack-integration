@@ -24,7 +24,7 @@ Date: 2025-11-09
 **Dependencies**: None
 
 **Tasks**:
-- [ ] Create project structure (`custom_components/bookstack_export/`)
+- [ ] Create project structure (`custom_components/bookstack_integration/`)
 - [ ] Implement `BookStackClient` base class
 - [ ] Add basic authentication and error handling
 - [ ] Create unit tests for client methods

@@ -17,8 +17,8 @@ This roadmap provides a prioritized, actionable plan to implement the BookStack 
 #### Tasks:
 1. **Create Project Structure**
    ```bash
-   mkdir -p custom_components/bookstack_export
-   cd custom_components/bookstack_export
+   mkdir -p custom_components/bookstack_integration
+   cd custom_components/bookstack_integration
    ```
 
 2. **Initialize Core Files**
@@ -44,11 +44,11 @@ This roadmap provides a prioritized, actionable plan to implement the BookStack 
 - ✅ All unit tests pass
 
 #### Files to Create:
-- `custom_components/bookstack_export/manifest.json`
-- `custom_components/bookstack_export/const.py`
-- `custom_components/bookstack_export/__init__.py`
-- `custom_components/bookstack_export/strings.json`
-- `custom_components/bookstack_export/bookstack_api.py`
+- `custom_components/bookstack_integration/manifest.json`
+- `custom_components/bookstack_integration/const.py`
+- `custom_components/bookstack_integration/__init__.py`
+- `custom_components/bookstack_integration/strings.json`
+- `custom_components/bookstack_integration/bookstack_api.py`
 - `tests/test_bookstack_api.py`
 
 ---
@@ -80,7 +80,7 @@ This roadmap provides a prioritized, actionable plan to implement the BookStack 
 - ✅ Error messages are clear and helpful
 
 #### Files to Create:
-- `custom_components/bookstack_export/config_flow.py`
+- `custom_components/bookstack_integration/config_flow.py`
 - Update `__init__.py` to register config flow
 
 ---
@@ -118,8 +118,8 @@ This roadmap provides a prioritized, actionable plan to implement the BookStack 
 - ✅ Handles 100+ devices without performance issues
 
 #### Files to Create:
-- `custom_components/bookstack_export/exporter.py`
-- `custom_components/bookstack_export/services.yaml`
+- `custom_components/bookstack_integration/exporter.py`
+- `custom_components/bookstack_integration/services.yaml`
 - Update `bookstack_api.py` with required methods
 
 ---
@@ -130,7 +130,7 @@ This roadmap provides a prioritized, actionable plan to implement the BookStack 
 
 #### Tasks:
 1. **Register Export Service**
-   - Add `bookstack_export.export` service
+   - Add `bookstack_integration.export` service
    - Implement service handler
    - Add area filtering and dry run options
 
@@ -151,8 +151,8 @@ This roadmap provides a prioritized, actionable plan to implement the BookStack 
 - ✅ Re-runs update existing content correctly
 
 #### Files to Modify:
-- `custom_components/bookstack_export/__init__.py`
-- `custom_components/bookstack_export/services.yaml`
+- `custom_components/bookstack_integration/__init__.py`
+- `custom_components/bookstack_integration/services.yaml`
 
 ---
 
