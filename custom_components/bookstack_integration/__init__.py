@@ -14,13 +14,8 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the BookStack Custom Integration component."""
     hass.data.setdefault(DOMAIN, {})
     
-    # Register the domain for config entries (this is required for config_flow)
-    hass.async_create_task(
-        hass.config_entries.flow.async_init(
-            DOMAIN, context={"source": config_entries.SOURCE_IMPORT}, data={}
-        )
-    )
-    
+    # Register the domain for config entries
+    # Note: The config flow handles the setup, no import flow needed
     return True
 
 
@@ -34,7 +29,8 @@ async def async_setup_entry(
     hass.data[DOMAIN][entry.entry_id] = entry
     
     # Forward the setup to the config flow handler
-    await hass.config_entries.async_forward_entry_setup(entry, "sensor")
+    # Note: This integration doesn't have sensor entities
+    # await hass.config_entries.async_forward_entry_setup(entry, "sensor")
     
     # Register services
     await _register_services(hass)
@@ -49,9 +45,13 @@ async def async_unload_entry(
     _LOGGER.info("Unloading BookStack Custom Integration integration")
     
     # Forward the unload to the config flow handler
-    unload_ok = await hass.config_entries.async_forward_entry_unload(
-        entry, "sensor"
-    )
+    # Note: This integration doesn't have entities to unload
+    # unload_ok = await hass.config_entries.async_forward_entry_unload(
+    #     entry, "sensor"
+    # )
+    
+    # Always return True since we don't have entities
+    unload_ok = True
     
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)

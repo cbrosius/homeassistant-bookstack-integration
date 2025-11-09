@@ -10,12 +10,14 @@ from homeassistant.data_entry_flow import FlowResult
 from .const import (
     DOMAIN,
     CONF_BASE_URL,
-    CONF_API_TOKEN,
+    CONF_TOKEN_ID,
+    CONF_TOKEN_SECRET,
     CONF_BOOK_NAME,
     CONF_TIMEOUT,
     DEFAULT_TIMEOUT,
     LOGGER_NAME
 )
+from .bookstack_api import BookStackClient, BookStackConfig, BookStackError
 
 _LOGGER = logging.getLogger(LOGGER_NAME)
 
@@ -40,7 +42,8 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             # Validate the user input
             base_url = user_input[CONF_BASE_URL].rstrip("/")
-            api_token = user_input[CONF_API_TOKEN]
+            token_id = user_input[CONF_TOKEN_ID]
+            token_secret = user_input[CONF_TOKEN_SECRET]
             timeout = user_input.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
 
             # Basic URL validation
@@ -52,8 +55,10 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 user_input[CONF_BASE_URL] = base_url
 
             # Basic token validation
-            if not api_token or len(api_token.strip()) < 10:
-                errors[CONF_API_TOKEN] = "invalid_token"
+            if not token_id or len(token_id.strip()) < 5:
+                errors[CONF_TOKEN_ID] = "invalid_token_id"
+            if not token_secret or len(token_secret.strip()) < 10:
+                errors[CONF_TOKEN_SECRET] = "invalid_token_secret"
 
             # Validate timeout
             try:
@@ -69,8 +74,7 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Store the data
                 self._data.update(user_input)
 
-                # Test connection (async, will be implemented in Phase 2)
-                # For now, we'll just proceed to the next step
+                # Test connection
                 return await self.async_step_test()
 
         # Show the form
@@ -78,7 +82,8 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required(CONF_BASE_URL, default=""): str,
-                vol.Required(CONF_API_TOKEN, default=""): str,
+                vol.Required(CONF_TOKEN_ID, default=""): str,
+                vol.Required(CONF_TOKEN_SECRET, default=""): str,
                 vol.Optional(CONF_BOOK_NAME, default=""): str,
                 vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): int,
             }),
@@ -93,20 +98,72 @@ class BookStackIntegrationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
         """Test the BookStack connection."""
-        if user_input is not None:
-            # Create the config entry
-            return self.async_create_entry(
-                title="BookStack Custom Integration",
-                data=self._data,
-                description="BookStack Custom Integration configuration",
+        # Test the BookStack connection
+        try:
+            config = BookStackConfig(
+                base_url=self._data[CONF_BASE_URL],
+                token_id=self._data[CONF_TOKEN_ID],
+                token_secret=self._data[CONF_TOKEN_SECRET],
+                timeout=self._data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
             )
-
-        # For now, skip the test step and go directly to creation
-        return self.async_create_entry(
-            title="BookStack Custom Integration",
-            data=self._data,
-            description="BookStack Custom Integration configuration",
-        )
+            client = BookStackClient(config)
+            
+            # Run the test in executor to avoid blocking
+            connection_result = await self.hass.async_add_executor_job(
+                client.test_connection
+            )
+            
+            if connection_result:
+                _LOGGER.info("BookStack connection test successful")
+                
+                # Create the config entry
+                return self.async_create_entry(
+                    title="BookStack Custom Integration",
+                    data=self._data,
+                )
+            else:
+                raise BookStackError("Connection test failed")
+                
+        except BookStackError as e:
+            _LOGGER.error(f"BookStack connection test failed: {e}")
+            error_message = "connection_failed"
+            
+            if "authentication" in str(e).lower() or "401" in str(e):
+                error_message = "auth_failed"
+            elif "not found" in str(e).lower() or "404" in str(e):
+                error_message = "connection_failed"
+            elif "timeout" in str(e).lower() or "time" in str(e).lower():
+                error_message = "timeout"
+            elif "rate" in str(e).lower() or "429" in str(e):
+                error_message = "connection_failed"
+            
+            # Return to user form with error
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema({
+                    vol.Required(CONF_BASE_URL, default=""): str,
+                    vol.Required(CONF_TOKEN_ID, default=""): str,
+                    vol.Required(CONF_TOKEN_SECRET, default=""): str,
+                    vol.Optional(CONF_BOOK_NAME, default=""): str,
+                    vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): int,
+                }),
+                errors={"base": error_message},
+            )
+        except Exception as e:
+            _LOGGER.error(f"Unexpected error during connection test: {e}")
+            
+            # Return to user form with unknown error
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema({
+                    vol.Required(CONF_BASE_URL, default=""): str,
+                    vol.Required(CONF_TOKEN_ID, default=""): str,
+                    vol.Required(CONF_TOKEN_SECRET, default=""): str,
+                    vol.Optional(CONF_BOOK_NAME, default=""): str,
+                    vol.Optional(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): int,
+                }),
+                errors={"base": "unknown"},
+            )
 
     async def async_step_import(
         self, import_config: Dict[str, Any]
@@ -139,7 +196,8 @@ class BookStackIntegrationOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             # Validate the user input (similar to config flow)
             base_url = user_input[CONF_BASE_URL].rstrip("/")
-            api_token = user_input[CONF_API_TOKEN]
+            token_id = user_input[CONF_TOKEN_ID]
+            token_secret = user_input[CONF_TOKEN_SECRET]
 
             # Basic URL validation
             if not base_url.startswith(("http://", "https://")):
@@ -149,8 +207,10 @@ class BookStackIntegrationOptionsFlow(config_entries.OptionsFlow):
                 user_input[CONF_BASE_URL] = base_url
 
             # Basic token validation
-            if not api_token or len(api_token.strip()) < 10:
-                errors[CONF_API_TOKEN] = "invalid_token"
+            if not token_id or len(token_id.strip()) < 5:
+                errors[CONF_TOKEN_ID] = "invalid_token_id"
+            if not token_secret or len(token_secret.strip()) < 10:
+                errors[CONF_TOKEN_SECRET] = "invalid_token_secret"
 
             # Validate timeout
             try:
@@ -176,19 +236,23 @@ class BookStackIntegrationOptionsFlow(config_entries.OptionsFlow):
             step_id="init",
             data_schema=vol.Schema({
                 vol.Required(
-                    CONF_BASE_URL, 
+                    CONF_BASE_URL,
                     default=current_data.get(CONF_BASE_URL, "")
                 ): str,
                 vol.Required(
-                    CONF_API_TOKEN, 
-                    default=current_data.get(CONF_API_TOKEN, "")
+                    CONF_TOKEN_ID,
+                    default=current_data.get(CONF_TOKEN_ID, "")
+                ): str,
+                vol.Required(
+                    CONF_TOKEN_SECRET,
+                    default=current_data.get(CONF_TOKEN_SECRET, "")
                 ): str,
                 vol.Optional(
-                    CONF_BOOK_NAME, 
+                    CONF_BOOK_NAME,
                     default=current_data.get(CONF_BOOK_NAME, "")
                 ): str,
                 vol.Optional(
-                    CONF_TIMEOUT, 
+                    CONF_TIMEOUT,
                     default=current_options.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
                 ): int,
             }),

@@ -16,7 +16,8 @@ _LOGGER = logging.getLogger(LOGGER_NAME)
 class BookStackConfig:
     """Configuration for BookStack client."""
     base_url: str
-    token: str
+    token_id: str
+    token_secret: str
     timeout: int = DEFAULT_TIMEOUT
 
 
@@ -90,8 +91,9 @@ class BookStackClient:
         """Initialize the BookStack client."""
         self.config = config
         self.session = requests.Session()
+        # Use TokenID and TokenSecret for authentication as per BookStack API
         self.session.headers.update({
-            "Authorization": f"Token {config.token}",
+            "Authorization": f"Token {config.token_id}:{config.token_secret}",
             "Content-Type": "application/json",
             "Accept": "application/json",
         })

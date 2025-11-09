@@ -4,7 +4,7 @@ DOMAIN = "bookstack_integration"
 
 # Default values
 DEFAULT_TIMEOUT = 30
-DEFAULT_BOOK_NAME = "Home Assistant Documentation"
+DEFAULT_BOOK_NAME = "Automated Smarthome Documentation"
 DEFAULT_BOOK_DESCRIPTION = (
     "Exported documentation of Home Assistant devices and entities"
 )
@@ -14,7 +14,8 @@ API_BASE_SUFFIX = "/api"
 
 # Configuration keys
 CONF_BASE_URL = "base_url"
-CONF_API_TOKEN = "api_token"
+CONF_TOKEN_ID = "token_id"
+CONF_TOKEN_SECRET = "token_secret"
 CONF_BOOK_NAME = "book_name"
 CONF_TIMEOUT = "timeout"
 
