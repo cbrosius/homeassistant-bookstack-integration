@@ -130,7 +130,8 @@ async def _ensure_all_devices_exist(hass: HomeAssistant) -> None:
         device_registry = dr.async_get(hass)
         
         # Get all BookStack config entries
-        for entry_id, entry in hass.config_entries.async_entries(DOMAIN):
+        for entry in hass.config_entries.async_entries(DOMAIN):
+            entry_id = entry.entry_id
             shelf_name = entry.data.get(CONF_SHELF_NAME, "Unknown Shelf")
             
             device_info = {
